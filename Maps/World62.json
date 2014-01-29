@@ -1,0 +1,31 @@
+{
+  "locations": [
+    { "entry": true },
+    { "entry": "ExitPipeVert" },
+    { "entry": "ExitPipeVert" },
+    { "xloc": 1304 },
+    { "entry": "ExitPipeVert" },
+    { "area": 1 },
+    { "area": 2 },
+    { "area": 3, "entry": "EnterCloudWorld" },
+    { "area": 4 }
+  ],
+  "areas": [
+    {
+      "setting": "Overworld Night",
+      "creation": [
+        { "location": 0 },
+        { "macro": "Floor", "width": 984 },
+        { "macro": "Pattern", "pattern": "BackRegular", "repeat": 5 },
+        { "macro": "Fill", "thing": "Brick", "x": 80, "y": 32, "xnum": 3 },
+        { "macro": "Pipe", "x": 152, "height": 32, "pirhana": true, "entrance": 5 },
+        { "thing": "Brick", "x": 184, "y": 64 },
+        { "thing": "Block", "x": 192, "y": 32, "hidden": true },
+        { "thing": "Brick", "x": 192, "y": 64, "contents": "Coin" },
+        { "thing": "Brick", "x": 200, "y": 64 },
+        
+        { "macro": "EndCastleOutside", "x": 1484 }
+      ]
+    }
+  ]
+}
