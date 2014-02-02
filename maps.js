@@ -10,7 +10,8 @@ function resetMapsManager() {
       "fillStyle",
       "refy",
       "setting",
-      "underwater"
+      "underwater",
+      "time"
     ],
     groupings: [
       "scenery",
@@ -72,8 +73,8 @@ function resetMapsManager() {
       }
     },
     preload: {
-      6: {
-        2: "World62"
+      1: {
+        2: "World12"
       }
     }
   });
@@ -205,11 +206,12 @@ function resetMapsManager() {
 
 function setMap(name) {
   if(!name) name = MapsManager.getMapName();
-  // Non-generic pre code
   gamecount = 0;
   gamehistory = [];
   resetQuadrants();
   // From shiftToLocation
+  TimeHandler.clearAllEvents();
+  TimeHandler.addEventInterval(updateDataTime, 25, Infinity);
   resetGameState();
   resetGameScreenPosition();
   resetQuadrants();
@@ -227,13 +229,11 @@ function setMap(name) {
     jumpmod: 1.056,
     canscroll: true
   };
-  window.data = new Data();
-  setDataDisplay();
-  startDataTime();
   
   // MapsManager.setRecipient(map_settings);
   MapsManager.setMap(name);
-  
+  StatsHolder.set("world", name.join('-'));
+  startDataTime();
   unpause();
 }
 
@@ -353,7 +353,6 @@ function locMovePreparations(me) {
 function goToTransport(transport) {
   // Goes to a new map
   if(transport instanceof Array) { 
-    storePlayerStats();
     MapsManager.setMap(transport);
   }
   // Goes to a new Location
@@ -389,7 +388,6 @@ function endLevel() {
     ++currentmap[0];
     currentmap[1] = 1;
   }
-  storePlayerStats();
   setMap(currentmap);
 }
 

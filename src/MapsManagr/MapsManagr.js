@@ -450,8 +450,9 @@ function MapsManagr(settings) {
     area_current = map_current.area = location.area;
     
     // Copy the area settings into the recipient
-    for(var i = 0, len = recipient_receives.length; i < len; ++i) 
+    for(var i = 0, len = recipient_receives.length; i < len; ++i) {
       recipient[recipient_receives[i]] = area_current[recipient_receives[i]];
+    }
     
     // Create the area itself
     area_current.setPreThings();

@@ -1,6 +1,8 @@
 FullScreenMario
 ===============
 
+*This is a forked version of FullScreenMario that radically changes Things, Maps and local data. Not all functionality has been copied over, and many maps are missing key features. Once it has completely made up the features from the main branch, it will be merged back into the project.*
+
 An HTML5 remake of the original Super Mario Brothers - expanded for modern browsing.
 
 ------------------------------------------------------------------------------------

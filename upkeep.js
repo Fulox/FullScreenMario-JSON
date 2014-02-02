@@ -155,7 +155,6 @@ function maintainPlayer(update) {
         return shiftToLocation(map.exitloc);
       }
       // Otherwise, since Player is below the gamescreen, kill him dead
-      clearPlayerStats();
       killPlayer(player, 2);
     }
   }

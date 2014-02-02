@@ -24,22 +24,29 @@ function StatsHoldr(settings) {
       prefix,
       
       // An array of elements as createElement arguments, outside-to-inside
-      containers;
+      containers,
+      
+      // A bit of text between an element's label and value
+      separator;
   
   function Value(key, settings) {
     this.key = key;
     proliferate(this, defaults);
     proliferate(this, settings);
-    
+ 
     if(!this.hasOwnProperty("value"))
       this.value = this.value_default;
     
     if(this.has_element) {
       this.element = createElement(this.element || "div", {
         className: prefix + "_value " + key,
-        innerHTML: this.value
+        innerHTML: this.key + separator + this.value
       });
       this.updateElement = updateElement;
+    }
+    
+    if(this.modularity) {
+      this.check_modularity = checkModularity;
     }
     
     if(this.store_locally) {
@@ -85,18 +92,32 @@ function StatsHoldr(settings) {
   }
   this.increase = function(key, value) {
     if(!checkExistence(key)) return;
+    if(arguments.length == 1) value = 1;
     values[key].value += value;
     values[key].update();
   }
   this.decrease = function(key, value) {
     if(!checkExistence(key)) return;
+    if(arguments.length == 1) value = 1;
     values[key].value -= value;
+    values[key].update();
+  }
+  // Toggling requires the type to be a bool, since true -> "true" -> NaN
+  this.toggle = function(key) {
+    if(!checkExistence(key)) return;
+    values[key].value = values[key].value ? 0 : 1;
     values[key].update();
   }
   function checkExistence(key) {
     if(values.hasOwnProperty(key)) return true;
     console.warn("The key '" + key + "' does not exist in storage.");
     return false;
+  }
+  function checkModularity() {
+    while(this.value > this.modularity) {
+      this.value = this.value % this.modularity;
+      if(this.on_modular) this.on_modular();
+    }
   }
   
   
@@ -105,11 +126,22 @@ function StatsHoldr(settings) {
   
   // Updates whatever's needed from the visual element and localStorage
   function update() {
+    // Mins and maxes must be obeyed before any other considerations
+    if(this.hasOwnProperty("minimum") && Number(this.value) <= Number(this.minimum)) {
+      this.value = this.minimum;
+      if(this.on_minimum) this.on_minimum();
+    }
+    else if(this.hasOwnProperty("maximum") && Number(this.value) <= Number(this.maximum)) {
+      this.value = this.maximum;
+      if(this.on_maximum) this.on_maximum();
+    }
+    
+    if(this.modularity)    this.check_modularity();
     if(this.has_element)   this.updateElement();
     if(this.store_locally) this.updateLocalStorage();
   }
   function updateElement() {
-    this.element.innerHTML = this.value;
+    this.element.innerHTML = this.key + separator + this.value;
   }
   function updateLocalStorage() {
     localStorage[prefix + this.key] = this.value;
@@ -149,6 +181,7 @@ function StatsHoldr(settings) {
   function reset(settings) {
     localStorage = window.localStorage || settings.localStorage || {};
     prefix       = settings.prefix     || "";
+    separator    = settings.separator  || "";
     containers   = settings.containers || [ ["div", { "className": prefix + "_container" }] ]
     
     defaults = {};
@@ -161,59 +194,4 @@ function StatsHoldr(settings) {
         values[key] = new Value(key, settings.values[key]);
   }
   reset(settings);
-}
-
-function resetStatsHolder() {
-  window.StatsHolder = new StatsHoldr({
-    prefix: "FullScreenMario",
-    containers: [
-      [ "table", {
-        "id": "data_display",
-        "className": "display",
-        "style": {
-          "width": (gamescreen.right + 14) + "px"
-        }
-      }],
-      [
-        "tr"
-      ]
-    ],
-    defaults: {
-      "element": "td"
-    },
-    values: {
-      "power": {
-        value_default: 1,
-        store_locally: true
-      },
-      "traveled": { value_default: 0 },
-      "score": {
-        value_default: 0,
-        digits: 6,
-        has_element: true
-      },
-      "time": {
-        value_default: 0,
-        digits: 3,
-        has_element: true
-      },
-      "world": {
-        value_default: 0,
-        has_element: true
-      },
-      "coins": {
-        value_default: 0,
-        has_element: true
-      },
-      "lives": {
-        value_default: 3,
-        store_locally: true,
-        has_element: true
-      },
-      "luigi": {
-        value_default: 0,
-        store_locally: true
-      }
-    }
-  });
 }

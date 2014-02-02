@@ -26,23 +26,16 @@ canvas {
 /*
  * Game objects
  */ 
-.display {
+#data_display {
   position: fixed;
   font-size: 21px;
+  text-transform: uppercase;
 }
-.indisplay {
+.FullScreenMario_value  {
   margin: 7px 14px 0 14px;
   text-align: center;
   z-index: 14;
-}
-.indisplay.counter, .indisplay.seed {
-  position: fixed;
-  padding: 3px 7px;
-  bottom: 0;
-  background: rgba(0,0,0,.49);
-}
-.indisplay.counter { right: 0; }
-.indisplay.seed{ left: 0; }
+} 
 
 .text {
   position: absolute;
@@ -55,13 +48,6 @@ canvas {
   margin: 0;
 }
 
-.score {
-  width: 35px;
-  height: 14px;
-  font-size: 21px;
-  z-index: 14;
- }
- 
 /* Editor */
 
 .editor #data_display {

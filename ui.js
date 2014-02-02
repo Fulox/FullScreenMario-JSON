@@ -174,8 +174,8 @@ function setCheats() {
   console.log("If you'd like, go ahead and look around the source code. There are a few surprises you might have fun with... ;)");
   console.log("http://www.github.com/DiogenesTheCynic/FullScreenMario");
   window.cheats = {
-    Change_Map: "game.setMap([#,#] or #,#);",
-    Change_Map_Location: "game.shiftToLocation(#);",
+    Change_Map: "game.setMap([#,#]);",
+    Change_Map_Location: "game.MapsManager.setLocation(#);",
     Fast_Forward: "game.fastforward(amount; 1 by default);",
     Life: "game.gainLife(# amount or Infinity)",
     Low_Gravity: "game.player.gravity = game.gravity /= 2;",
@@ -183,7 +183,7 @@ function setCheats() {
     Random_Map: "game.setMapRandom();",
     Shroom: "game.playerShroom(game.player)",
     Star_Power: "game.playerStar(game.player)",
-    Unlimited_Time: "game.data.time.amount = Infinity;",
+    Unlimited_Time: "game.StatsHolder.set(\"time\", Infinity);";
   }
   cheatsize = 0;
   for(var i in cheats)

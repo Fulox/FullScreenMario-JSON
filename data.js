@@ -1,95 +1,86 @@
 /* Data.js */
-// A few functions to store and display ~persistent data
-// "use strict";
+// A few functions to store and display ~persistent data using a StatsHoldr
 
-// window.data stores the references to data and elements
-function resetData() {
-  // Make sure there's no data display already
-  var check;
-  if(check = document.getElementById("data_display"))
-    body.removeChild(check);
+function resetStatsHolder() {
+  window.StatsHolder = new StatsHoldr({
+    prefix: "FullScreenMario",
+    containers: [
+      [ "table", {
+        "id": "data_display",
+        "className": "display",
+        "style": {
+          "width": (gamescreen.right + 14) + "px"
+        }
+      }],
+      [
+        "tr"
+      ]
+    ],
+    defaults: {
+      "element": "td"
+    },
+    "separator": "<br />",
+    values: {
+      "power": {
+        value_default: 1,
+        store_locally: false
+      },
+      "traveled": { value_default: 0 },
+      "score": {
+        value_default: 0,
+        digits: 6,
+        has_element: true,
+        modularity: 100000,
+        on_modular: gainLife
+      },
+      "time": {
+        value_default: 0,
+        digits: 3,
+        has_element: true,
+        minimum: 0,
+        on_minimum: function() { killPlayer(player, true); }
+      },
+      "world": {
+        value_default: 0,
+        has_element: true
+      },
+      "coins": {
+        value_default: 0,
+        has_element: true,
+        modularity: 100,
+        on_modular: gainLife
+      },
+      "lives": {
+        value_default: 3,
+        store_locally: true,
+        has_element: true
+      },
+      "luigi": {
+        value_default: 0,
+        store_locally: true
+      }
+    }
+  });
   
-  if(!window.data) {
-    window.data = new Data();
-    // setDataDisplay();
-  }
-}
-// Keeps information displayed on the screen
-function Data() {
-  this.playerpower = 1;
-  this.traveled = this.traveledold = 0; // only used for random
-  this.scorelevs = [100, 200, 400, 500, 800, 1000, 2000, 4000, 5000, 8000];
-  this.score = new DataObject(0, 6, "SCORE");
-  this.time = new DataObject(350, 3, "TIME");
-  this.world = new DataObject(0, 0, "WORLD");
-  this.coins = new DataObject(0, 0, "COINS");
-  this.lives = new DataObject(3, 1, "LIVES");
-  this.time.dir = -1;
-  this.scoreold = 0;
+  body.appendChild(StatsHolder.makeContainer());
 }
 
-// Keeps a reference to the actual HTML element on display
-function DataObject(amount, length, name) {
-  this.amount = amount;
-  this.length = length;
-  this.name = name;
-  this.element = createElement("td", {className: "indisplay"});
-}
-
-// Sets up the data display on the screen
-function setDataDisplay() {
-  var display = createElement("table", {
-            id: "data_display",
-            className: "display",
-            style: {
-              width: (gamescreen.right + 14) + "px"
-            }}),
-      elems = ["score", "coins", "world", "time", "lives"];
-  body.appendChild(display);
-  data.display = display;
-  for(var i in elems) {
-    display.appendChild(data[elems[i]].element);
-    updateDataElement(data[elems[i]]);
-  }
-  body.appendChild(data.display);
-}
-
-// Getting rid of the display simply means removing it from body
-function clearDataDisplay() {
-  body.removeChild(data_display);
-}
-
-function toggleLuigi() {
-  window.luigi = !window.luigi;
-  localStorage.luigi = window.luigi;
-  window.player.title = (window.luigi) ? "Luigi" : "Mario";
-  setThingSprite(window.player);
+function toggleLuigi(nochange) {
+  if(!nochange) StatsHolder.toggle("luigi");
+  // (StatsHolder.get("luigi") ? addClass : removeClass)(player, "Luigi");
+  player.title = StatsHolder.get("luigi") ? "Luigi" : "Player";
+  setThingSprite(player);
 }
 
 // Starts the interval of updating data time
 // 1 game second is about 25*16.667=416.675ms
 function startDataTime() {
-  TimeHandler.addEventInterval(updateDataTime, 25, Infinity, data.time);
+  StatsHolder.set("time", MapsManager.getArea().time);
 }
-function updateDataTime(me) {
-  // If the time direction isn't up (random map), check for timing
-  if(me.dir != 1) {
-    if(me.amount == 100) playCurrentThemeHurry(); 
-    else if(me.amount <= 0) killPlayer(player, true);
-  }
-  // If time is still enabled, change it by 1
-  if(!notime) {
-    map_settings.time = me.amount += me.dir;
-    updateDataElement(me);
-  }
-}
-
-// Updates a typical DataObject to its value
-function updateDataElement(me) {
-  var text = me.name + "<br />" + (me.amount == "Infinity" ? "Inf" : me.amount);
-  me.element.innerHTML = text;
-  /*if(text.length > 14) me.element.style.width = "490px";
-  else */me.element.style.width = "";
+function updateDataTime() {
+  if(notime) return;
+  // To do: increasing time for random / no time for editor
+  StatsHolder.decrease("time", 1);
 }
 
 
@@ -98,19 +89,23 @@ function score(me, amount, appears) {
   if(amount <= 0) return;
   // If it's in the form 'score(X)', return 'score(player, x)'
   if(arguments.length == 1) return score(player, me);
-  // Keep the high score in localStorage, why not.
-  localStorage.highscore = max(localStorage.highscore, data.score.amount += amount);
+  
   // If it appears, add the element
   if(appears) {
     var text = addText(amount, me.left, me.top);
     text.yvel = -unitsized4;
     TimeHandler.addEvent(killScore, 49, text);
   }
-  while(data.score > 10000) { // you never know...
+  
+  // Check for life gaining (above 10000)
+  amount += StatsHolder.get("score");
+  while(amount > 10000) {
     gainLife();
-    data.score.amount = data.score.amount % 10000;
+    amount = amount % 10000;
   }
-  updateDataElement(data.score);
+  
+  // Set the new score amount, which updates the element
+  StatsHolder.set("score", amount);
 }
 function killScore(text) {
   if(body.contains(text))
@@ -119,26 +114,15 @@ function killScore(text) {
   deleteThing(text, texts, texts.indexOf(text));
 }
 
+// For hopping on / shelling enemies, the score given increases each time
+// Once it passes the threshold, gainLife happens instead
 function findScore(lev) {
-  if(lev < data.scorelevs.length) return data.scorelevs[lev];
+  if(lev < 10) return [100, 200, 400, 500, 800, 1000, 2000, 4000, 5000, 8000][lev];
   gainLife();
-  return -1;
 }
 
 function gainLife(num, nosound) {
-  data.lives.amount += typeof(num) == "number" ? num : 1;
+  if(typeof(num) != "number") num = 1;
+  StatsHolder.increase("lives", num);
   if(!nosound) AudioPlayer.play("Gain Life");
-  updateDataElement(data.lives);
-}
-
-function setLives(num) {
-  data.lives.amount = Number(num);
-  updateDataElement(data.lives);
-}
-
-function storePlayerStats() {
-  data.playerpower = player.power;
-}
-function clearPlayerStats() {
-  data.playerpower = player.power = 1;
 }

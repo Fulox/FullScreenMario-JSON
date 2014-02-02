@@ -43,7 +43,6 @@ function FullScreenMario() {
   resetMapsManager();
   resetStatsHolder();
   resetTriggers();
-  resetSeed();
   resetSounds();
 
   window.luigi = (localStorage && localStorage.luigi == "true");
@@ -230,8 +229,6 @@ function resetQuadrants() {
 function resetGameState(nocount) {
   // HTML is reset here
   clearAllTimeouts();
-  // Also reset data
-  resetData();
   window.nokeys = window.spawning = window.spawnon =
     window.notime = window.editing = window.qcount = window.lastscroll = 0;
   window.paused = window.gameon = window.speed = 1;

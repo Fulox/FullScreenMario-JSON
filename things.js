@@ -75,12 +75,12 @@ function resetThings() {
           Shell: {},
           Vine: {}
         },
-        BrickShard: {},
         Coin: {},
         Firework: {},
       },
       solid: {
         Block: {},
+        BrickShard: {},
         BridgeBase: {},
         Brick: {},
         DeadGoomba: {},
@@ -147,6 +147,7 @@ function resetThings() {
       },
         Player: {
           player: 1,
+          power: 1,
           canjump: 1,
           nofiredeath: 1,
           nofire: 1,
@@ -313,6 +314,7 @@ function resetThings() {
           height: 4,
           nocollide: true,
           skipoverlaps: true,
+          movement: false,
           spriteCycle: [[unflipHoriz, flipHoriz]]
         },
         Coin: {
@@ -548,6 +550,7 @@ function addThing(me, left, top) {
   
   // Place the Thing in the game and in its correct grouping array
   placeThing(me, left, top);
+  if(!window[me.libtype]) window[me.libtype] = [];
   window[me.libtype].push(me);
   me.placed = true;
   
@@ -691,7 +694,7 @@ function hitShell(one, two) {
     if(one.type.split(" ")[0] == "koopa") {
       // If the enemy is a koopa, make it a shell
       // To do: automate this for things with shells (koopas, beetles)
-      var spawn = new Thing(Shell, one.smart);
+      var spawn = ObjectMaker.make("Shell", { smart: one.smart });
       addThing(spawn, one.left, one.bottom - spawn.height * unitsize);
       killFlip(spawn);
       killNormal(one);
@@ -1031,10 +1034,9 @@ function throwHammer(me, count) {
       if(!characterIsAlive(me)) return;
       // Throw the hammer...
       switchClass(me, "throwing", "thrown");
-      // var hammer = new Thing(Hammer, me.lookleft);
-      addThing(new Thing(Hammer, me.lookleft), me.left - unitsizet2, me.top - unitsizet2);
-      // ...and go again
+      addThing(ObjectMaker.make("Hammer"), me.left - unitsizet2, me.top - unitsizet2);
     }
+    // ...and go again
     if(count > 0) TimeHandler.addEvent(throwHammer, 7, me, --count);
     else {
       TimeHandler.addEvent(throwHammer, 70, me, 7);
@@ -1061,7 +1063,7 @@ function moveCannonInit(me) {
     function(me) {
       if(player.right > me.left - unitsizet8 && player.left < me.right + unitsizet8)
         return; // don't fire if Player is too close
-      var spawn = new Thing(BulletBill);
+      var spawn = ObjectMaker.make("BulletBill");
       if(objectToLeft(player, me)) {
         addThing(spawn, me.left, me.top);
         spawn.direction = spawn.moveleft = true;
@@ -1146,7 +1148,7 @@ function startCheepSpawn() {
   return map_settings.zone_cheeps = TimeHandler.addEventInterval(
     function() {
       if(!map_settings.zone_cheeps) return true;
-      var spawn = new Thing(CheepCheep, true, true);
+      var spawn = ObjectMaker.make("CheepCheep", { smart: true, flying: true});
       addThing(spawn, Math.random() * player.left * player.maxspeed / unitsized2, gamescreen.height * unitsize);
       spawn.xvel = Math.random() * player.maxspeed;
       spawn.yvel = unitsize * -2.33;
@@ -1203,7 +1205,7 @@ function throwSpiny(me) {
   switchClass(me, "out", "hiding");
   TimeHandler.addEvent(function(me) {
     if(me.dead) return false;
-    var spawn = new Thing(SpinyEgg);
+    var spawn = ObjectMaker.make("SpinyEgg");
     addThing(spawn, me.left, me.top);
     spawn.yvel = unitsize * -2.1;
     switchClass(me, "hiding", "out");
@@ -1218,7 +1220,7 @@ function moveSpinyEgg(me) {
   if(me.resting) createSpiny(me);
 }
 function createSpiny(me) {
-  var spawn = new Thing(Spiny);
+  var spawn = ObjectMaker.make("Spiny");
   addThing(spawn, me.left, me.top);
   spawn.moveleft = objectToLeft(player, spawn);
   killNormal(me);
@@ -1228,8 +1230,8 @@ function createSpiny(me) {
 function killBeetle(me, big) {
   if(!me.alive) return;
   var spawn;
-  if(big && big != 2) spawn = new Thing(Koopa, me.smart);
-  else spawn = new Thing(BeetleShell, me.smart);
+  if(big && big != 2) spawn = ObjectMaker.make("Koopa", { smart: me.smart });
+  else spawn = ObjectMaker.make("BeetleShell", { smart: me.smart });
   // Puts it on stack, so it executes immediately after upkeep
   TimeHandler.addEvent(
     function(spawn, me) {
@@ -1254,11 +1256,7 @@ function hitCoin(me, coin) {
   killNormal(coin);
 }
 function gainCoin() {
-  if(++data.coins.amount >= 100) {
-    data.coins.amount = 0;
-    gainLife();
-  }
-  updateDataElement(data.coins);
+  StatsHolder.increase("coins", 1);
 }
 function coinEmerge(me, solid) {
   AudioPlayer.play("Coin");
@@ -1301,37 +1299,14 @@ function coinEmergeMoveParent(me) {
 /*
  * Player
  */
- function Player(me) {
-  setPlayerSizeSmall(me);
-  me.walkspeed = unitsized2;
-  me.canjump = me.nofiredeath = me.nofire = me.player = me.nokillend = 1;
-  me.numballs = me.moveleft = me.skidding = me.star = me.dying = me.nofall = me.maxvel = me.paddling = me.jumpers = me.landing = 0;
-  me.running = ''; // Evalues to false for cycle checker
-  me.power = data.playerpower; // 1 for normal, 2 for big, 3 for fiery
-  me.maxspeed = me.maxspeedsave = unitsize * 1.35; // Really only used for timed animations
-  me.scrollspeed = unitsize * 1.75;
-  me.keys = new Keys();
-  me.fire = playerFires;
-  me.movement = movePlayer;
-  me.death = killPlayer;
-  setCharacter(me, "player normal small still");
-  me.tolx = unitsizet2;
-  me.toly = 0;
-  me.gravity = map_settings.gravity;
-  if(map_settings.underwater) {
-    me.swimming = true;
-    TimeHandler.addSpriteCycle(me, ["swim1", "swim2"], "swimming", 5);
-  }  
-}
-
 function placePlayer(xloc, yloc) {
   clearOldPlayer();
   window.player = ObjectMaker.make("Player", {
-    title: window.luigi ? "Luigi" : "Mario",
     gravity: map_settings.gravity,
     keys: new Keys(),
-    power: data.playerpower
+    power: StatsHolder.get("power")
   });
+  toggleLuigi(true);
   setPlayerSizeSmall(player);
   
   if(map_settings.underwater) {
@@ -1340,9 +1315,10 @@ function placePlayer(xloc, yloc) {
   }
 
   var adder = addThing(player, xloc || unitsizet16, yloc || (map_settings.floor - player.height) * unitsize);
-  if(data.playerpower >= 2) {
+  if(StatsHolder.get("power") >= 2) {
     playerGetsBig(player, true);
-    if(data.playerpower == 3) playerGetsFire(player, true);
+    if(StatsHolder.get("power") == 3)
+      playerGetsFire(player, true);
   }
   return adder;
 }
@@ -1397,11 +1373,11 @@ function removeCrouch() {
 function playerShroom(me) {
   if(me.shrooming) return;
   AudioPlayer.play("Powerup");
+  StatsHolder.increase("power");
   score(me, 1000, true);
   if(me.power == 3) return;
   me.shrooming = true;
-  (++me.power == 2 ? playerGetsBig : playerGetsFire)(me);
-  storePlayerStats();
+  (++me.power == 3 ? playerGetsFire : playerGetsBig)(me);
 }
 // These three modifiers don't change power levels.
 function playerGetsBig(me, noanim) {
@@ -1616,7 +1592,6 @@ function movePlayer(me) {
       addClass(me, "running");
     }
   }
-  if(isNaN(me.xvel)) debugger;
 }
 
 // Gives player visual running
@@ -1641,7 +1616,7 @@ function playerPaddles(me) {
 }
 
 function playerBubbles() {
-  var bubble = new Thing(Bubble);
+  var bubble = ObjectMaker.make("Bubble");
   addThing(bubble, player.right, player.top);
   // TimeHandler.addEvent(killNormal, 140, bubble);
 }
@@ -1766,7 +1741,6 @@ function killPlayer(me, big) {
     if(!big && me.power > 1) {
       AudioPlayer.play("Power Down");
       me.power = 1;
-      storePlayerStats();
       return playerGetsSmall(me);
     }
     // Otherwise, if this isn't a big one, animate a death
@@ -1796,8 +1770,7 @@ function killPlayer(me, big) {
   AudioPlayer.pause();
   if(!window.editing) AudioPlayer.play("Player Dies");
   me.nocollide = me.nomove = nokeys = 1;
-  --data.lives.amount;
-  if(!map_settings.random) data.score.amount = data.scoreold;
+  StatsHolder.decrease("lives");
   
   // If it's in editor, (almost) immediately set map
   if(window.editing) {
@@ -1807,14 +1780,12 @@ function killPlayer(me, big) {
     }, 35 * timer);
   }
   // If the map is normal, or failing that a game over is reached, timeout a reset
-  else if(!map_settings.random || data.lives.amount <= 0) {
-    TimeHandler.addEvent(data.lives.amount ? setMap : gameOver, 280);
+  else if(!map_settings.random || StatsHolder.get("lives") <= 0) {
+    TimeHandler.addEvent(StatsHolder.get("lives") ? setMap : gameOver, 280);
   }
   // Otherwise it's random; spawn him again
   else {
       nokeys = notime = false;
-      updateDataElement(data.score);
-      updateDataElement(data.lives);
       TimeHandler.addEvent(function() {
         playerDropsIn();
         AudioPlayer.playTheme();
@@ -1835,7 +1806,7 @@ function playerDropsIn() {
     
     TimeHandler.addEvent(function() {
       player.nocollide = false;
-      addThing(new Thing(RestingStone), player.left, player.bottom + player.yvel);
+      addThing("RestingStone", player.left, player.bottom + player.yvel);
     }, map.respawndist || 17);
   }
   // ...in which case just fix his gravity
@@ -1858,7 +1829,6 @@ function gameOver() {
   body.innerHTML = innerHTML;
   
   window.gamecount = Infinity;
-  clearPlayerStats();
   
   setTimeout(gameRestart, 7000);
 }
@@ -1871,7 +1841,7 @@ function gameRestart() {
   gameon = true;
   map.random ? setMapRandom() : setMap("World11");
   TimeHandler.addEvent(function() { body.style.visibility = ""; });
-  setLives(3);
+  StatsHolder.set("lives", 3);
 }
 
 
@@ -1964,7 +1934,7 @@ function placeShards(me) {
     addThing(shard,
                 me.left + (i < 2) * me.width * unitsize - unitsizet2,
                 me.top + (i % 2) * me.height * unitsize - unitsizet2);
-    shard.xvel = unitsized2 - unitsize * (i > 1);
+    shard.xvel = shard.speed = unitsized2 - unitsize * (i > 1);
     shard.yvel = unitsize * -1.4 + i % 2;
     TimeHandler.addEvent(killNormal, 350, shard);
   }
@@ -2365,19 +2335,17 @@ function endLevelPoints(me, detector) {
   killNormal(me);
   
   // Determine the number of fireballs (1, 3, and 6 become not 0)
-  var numfire = parseInt(getLast(String(data.time.amount)));
+  var numfire = parseInt(getLast(String(StatsHolder.get("time"))));
   if(!(numfire == 1 || numfire == 3 || numfire == 6)) numfire = 0;
   // Count down the points (x50)
   var points = setInterval(function() {
-    // 50 for each
-    --data.time.amount;
-    data.score.amount += 50;
-    updateDataElement(data.score);
-    updateDataElement(data.time);
+    // 50 points for each unit of time
+    StatsHolder.decrease("time");
+    StatsHolder.increase("score", 50);
     // Each point(x50) plays the coin noise
     AudioPlayer.play("Coin");
     // Once it's done, move on to the fireworks.
-    if(data.time.amount <= 0)  {
+    if(StatsHolder.get("time") <= 0)  {
       // pause();
       clearInterval(points);
       setTimeout(function() { endLevelFireworks(me, numfire, detector); }, timer * 49);
@@ -2404,9 +2372,10 @@ function endLevelFireworks(me, numfire, detector) {
 }
 function explodeFirework(num, castlemid) {
   setTimeout(function() {
-    var fire = new Thing(Firework, num);
-    addThing(fire, castlemid + fire.locs[0] - unitsize * 6, unitsizet16 + fire.locs[1]);
-    fire.animate();
+    log("Not placing fireball.");
+    // var fire = ObjectMaker.make("Firework");
+    // addThing(fire, castlemid + fire.locs[0] - unitsize * 6, unitsizet16 + fire.locs[1]);
+    // fire.animate();
   }, timer * num * 42);
 }
 function Firework(me, num) {
