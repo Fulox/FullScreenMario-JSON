@@ -42,15 +42,13 @@ function FullScreenMario() {
   resetScenery();
   resetMapsManager();
   resetStatsHolder();
+  resetInputWriter();
   resetTriggers();
   resetSounds();
 
-  window.luigi = (localStorage && localStorage.luigi == "true");
-
   // With that all set, set the map to World11.
-  window.gameon = true;
-  window.currentmap = [1,1];
-  setMap(currentmap);
+  StatsHolder.set("lives", 3);
+  setMap([1,1]);
   
   log("It took " + (Date.now() - time_start) + " milliseconds to start.");
 }

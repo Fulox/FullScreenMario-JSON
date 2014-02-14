@@ -75,12 +75,12 @@ function resetThings() {
           Shell: {},
           Vine: {}
         },
+        BrickShard: {},
         Coin: {},
         Firework: {},
       },
       solid: {
         Block: {},
-        BrickShard: {},
         BridgeBase: {},
         Brick: {},
         DeadGoomba: {},

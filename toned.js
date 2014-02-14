@@ -130,6 +130,11 @@ function TonedJS(give_window) {
       while(id--) clearTimeout(id);
     },
     
+    preventDefault: function(event) {
+      if(event && event.preventDefault instanceof Function)
+        event.preventDefault();
+    },
+    
     /* String manipulations */
     
     // Removes leading and trailing whitespace (thanks, IE<=8)

@@ -234,6 +234,7 @@ function setMap(name) {
   MapsManager.setMap(name);
   StatsHolder.set("world", name.join('-'));
   startDataTime();
+  InputWriter.restart();
   unpause();
 }
 

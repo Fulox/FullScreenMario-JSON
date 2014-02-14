@@ -4,7 +4,7 @@
  
 To do:
 * Enable adding things to the end (generator, castles)
-* Enable sorting (sort each grouping at [current_num, end]
+* Enable sorting (order each grouping at [current_num, end]
 
 Maps stored in the MapsCreatr are JSON objects that each contain an array of
 locations and an array of areas. Areas have a 'creation' array detailing how
